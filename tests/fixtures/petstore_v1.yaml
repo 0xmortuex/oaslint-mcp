@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Petstore
+  version: 1.0.0
+  description: A small pet store, written by hand for the oaslint tests.
+servers:
+  - url: https://api.petstore.example/v1
+tags:
+  - name: pets
+  - name: owners
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets
+      tags: [pets]
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of pets to return
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            $ref: '#/components/schemas/PetStatus'
+      responses:
+        '200':
+          description: A page of pets
+          headers:
+            X-Next:
+              description: cursor for the next page
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createPet
+      summary: Create a pet
+      tags: [pets]
+      security:
+        - oauth: [write:pets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPet'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pets/{petId}:
+    parameters:
+      - name: petId
+        in: path
+        required: true
+        description: The pet id
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: getPet
+      summary: Fetch a pet
+      tags: [pets]
+      responses:
+        '200':
+          description: The pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Not found
+    delete:
+      operationId: deletePet
+      summary: Remove a pet
+      tags: [pets]
+      deprecated: true
+      description: Use archivePet instead.
+      security:
+        - oauth: [write:pets]
+      responses:
+        '204':
+          description: Gone
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://auth.petstore.example/authorize
+          scopes:
+            read:pets: read pets
+            write:pets: modify pets
+  schemas:
+    PetStatus:
+      type: string
+      enum: [available, pending, sold]
+    NewPet:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        tag:
+          type: string
+        status:
+          $ref: '#/components/schemas/PetStatus'
+    Pet:
+      allOf:
+        - $ref: '#/components/schemas/NewPet'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              format: int64
+            owner:
+              $ref: '#/components/schemas/Owner'
+    Owner:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        pets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pet'
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+        message:
+          type: string

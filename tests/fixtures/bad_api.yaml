@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Bad API
+  version: '1'
+servers:
+  - url: http://api.bad-example.com/v1
+  - url: http://localhost:8080
+paths:
+  /users/:
+    get:
+      responses:
+        '200':
+          description: ok
+  /users/{id}:
+    get:
+      operationId: dup
+      summary: get user
+      responses:
+        '200':
+          description: ok
+        '404':
+          description: nope
+    delete:
+      operationId: dup
+      summary: remove user
+      deprecated: true
+      description: Old endpoint.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '204':
+          description: gone
+  /users/{userId}:
+    get:
+      operationId: getUserById
+      summary: duplicate shape
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: ok
+        '500':
+          description: boom
+  /items:
+    get:
+      operationId: listItems
+      summary: list
+      parameters:
+        - name: page_size
+          in: query
+          description: size
+          schema: {type: integer}
+        - name: pageToken
+          in: query
+          description: token
+          schema: {type: string}
+        - name: sort-by
+          in: query
+          description: order
+          schema: {type: string}
+      responses: {}
+    post:
+      operationId: createItem
+      summary: Create item
+      security:
+        - missingScheme: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: bad
+  /no2xx:
+    get:
+      operationId: no2xx
+      summary: only errors
+      responses:
+        '404':
+          description: nf
+  /widgets/{wid}:
+    get:
+      operationId: getWidget
+      summary: widget
+      parameters:
+        - name: other
+          in: path
+          required: true
+          schema: {type: string}
+        - name: flag
+          in: path
+          schema: {type: boolean}
+      responses:
+        '200':
+          description: ok
+        '404':
+          description: nf
+components:
+  schemas:
+    Item:
+      type: object
+      required: [id, nope]
+      properties:
+        id:
+          type: integer
+          enum: [1, two]
+        count:
+          type: integer
+          default: x
+        name:
+          type: string
+          example: 42
+        free: {}
+        ghost:
+          $ref: '#/components/schemas/Ghost'
+        remote:
+          $ref: 'https://example.invalid/schemas/Remote.yaml#/Remote'
+    Unused:
+      type: string
